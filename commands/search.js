@@ -1,10 +1,8 @@
-const { MessageEmbed } = require("discord.js");
-const YouTubeAPI = require("simple-youtube-api");
-const { YOUTUBE_API_KEY } = require("../util/Util");
-const youtube = new YouTubeAPI(YOUTUBE_API_KEY);
-const i18n = require("../util/i18n");
+import { MessageEmbed } from "discord.js";
+import { i18n } from "../utils/i18n.js";
+import youtube from "youtube-sr";
 
-module.exports = {
+export default {
   name: "search",
   description: i18n.__("search.description"),
   async execute(message, args) {
@@ -12,8 +10,10 @@ module.exports = {
       return message
         .reply(i18n.__mf("search.usageReply", { prefix: message.client.prefix, name: module.exports.name }))
         .catch(console.error);
+
     if (message.channel.activeCollector) return message.reply(i18n.__("search.errorAlreadyCollector"));
-    if (!message.member.voice.channel)
+
+    if (!message.member?.voice.channel)
       return message.reply(i18n.__("search.errorNotChannel")).catch(console.error);
 
     const search = args.join(" ");
@@ -24,10 +24,13 @@ module.exports = {
       .setColor("#F8AA2A");
 
     try {
-      const results = await youtube.searchVideos(search, 10);
-      results.map((video, index) => resultsEmbed.addField(video.shortURL, `${index + 1}. ${video.title}`));
+      const results = await youtube.search(search, { limit: 10 });
 
-      let resultsMessage = await message.channel.send(resultsEmbed);
+      results.map((video, index) =>
+        resultsEmbed.addField(`https://youtube.com/watch?v=${video.id}`, `${index + 1}. ${video.title}`)
+      );
+
+      let resultsMessage = await message.channel.send({ embeds: [resultsEmbed] });
 
       function filter(msg) {
         const pattern = /^[1-9][0]?(\s*,\s*[1-9][0]?)*$/;
@@ -35,7 +38,8 @@ module.exports = {
       }
 
       message.channel.activeCollector = true;
-      const response = await message.channel.awaitMessages(filter, { max: 1, time: 30000, errors: ["time"] });
+
+      const response = await message.channel.awaitMessages({ filter, max: 1, time: 30000, errors: ["time"] });
       const reply = response.first().content;
 
       if (reply.includes(",")) {

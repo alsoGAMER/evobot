@@ -1,7 +1,7 @@
-const { canModifyQueue } = require("../util/Util");
-const i18n = require("../util/i18n");
+import { i18n } from "../utils/i18n.js";
+import { canModifyQueue } from "../utils/queue.js";
 
-module.exports = {
+export default {
   name: "stop",
   description: i18n.__("stop.description"),
   execute(message) {
@@ -12,7 +12,9 @@ module.exports = {
 
     queue.loop = false;
     queue.songs = [];
-    queue.connection.dispatcher.end();
+    queue.player.stop();
+    queue.connection.destroy();
+
     queue.textChannel.send(i18n.__mf("stop.result", { author: message.author })).catch(console.error);
   }
 };

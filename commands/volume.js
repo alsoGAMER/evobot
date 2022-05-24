@@ -1,7 +1,7 @@
-const { canModifyQueue } = require("../util/Util");
-const i18n = require("../util/i18n");
+import { i18n } from "../utils/i18n.js";
+import { canModifyQueue } from "../utils/queue.js";
 
-module.exports = {
+export default {
   name: "volume",
   aliases: ["v"],
   description: i18n.__("volume.description"),
@@ -14,12 +14,15 @@ module.exports = {
 
     if (!args[0])
       return message.reply(i18n.__mf("volume.currentVolume", { volume: queue.volume })).catch(console.error);
+
     if (isNaN(args[0])) return message.reply(i18n.__("volume.errorNotNumber")).catch(console.error);
+
     if (Number(args[0]) > 100 || Number(args[0]) < 0)
       return message.reply(i18n.__("volume.errorNotValid")).catch(console.error);
 
     queue.volume = args[0];
-    queue.connection.dispatcher.setVolumeLogarithmic(args[0] / 100);
-    return queue.textChannel.send(i18n.__mf("volume.result", { arg: args[0] })).catch(console.error);
+    queue.resource.volume?.setVolumeLogarithmic(args[0] / 100);
+
+    return message.reply(i18n.__mf("volume.result", { arg: args[0] })).catch(console.error);
   }
 };
